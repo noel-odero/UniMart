@@ -1,0 +1,95 @@
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Brown/Beige theme CSS variables */
+:root {
+  --background: 35 20% 96%;
+  --foreground: 30 40% 12%;
+  --card: 35 15% 94%;
+  --card-foreground: 30 40% 15%;
+  --popover: 35 15% 94%;
+  --popover-foreground: 30 40% 15%;
+  --primary: 30 35% 40%;
+  --primary-foreground: 30 10% 95%;
+  --secondary: 35 25% 88%;
+  --secondary-foreground: 30 40% 20%;
+  --muted: 35 20% 90%;
+  --muted-foreground: 30 20% 40%;
+  --accent: 32 30% 75%;
+  --accent-foreground: 30 40% 15%;
+  --destructive: 0 62% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 35 20% 85%;
+  --input: 35 20% 85%;
+  --ring: 30 35% 40%;
+  --radius: 0.5rem;
+}
+
+/* Custom 3D-like utilities */
+.card-3d {
+  @apply transform transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02];
+  box-shadow: 0 10px 25px rgba(101, 67, 33, 0.15);
+}
+
+.card-3d:hover {
+  box-shadow: 0 20px 40px rgba(101, 67, 33, 0.25);
+}
+
+.button-3d {
+  @apply transform transition-all duration-200 active:scale-95 hover:shadow-lg;
+  box-shadow: 0 4px 15px rgba(101, 67, 33, 0.2);
+}
+
+.button-3d:hover {
+  box-shadow: 0 8px 25px rgba(101, 67, 33, 0.3);
+}
+
+.text-shadow {
+  text-shadow: 2px 2px 4px rgba(101, 67, 33, 0.1);
+}
+
+.navbar-3d {
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(101, 67, 33, 0.1);
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
