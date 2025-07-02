@@ -7,14 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const Browse = () => {
+    const Browse = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [sortBy, setSortBy] = useState("newest");
 
     // Mock data - will be replaced with Supabase data
-    const listings = [
+const listings = [
         {
         id: 1,
         title: "MacBook Pro 13-inch 2020",
@@ -222,7 +222,7 @@ const Browse = () => {
                 <CardContent>
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold text-brown-700">₹{listing.price}</span>
+                    <span className="text-2xl font-bold text-brown-700">RWF {listing.price}</span>
                     <Badge variant="outline" className="border-brown-300 text-brown-600">
                         {listing.condition}
                     </Badge>

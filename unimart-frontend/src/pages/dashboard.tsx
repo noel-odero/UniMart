@@ -111,7 +111,7 @@ const Dashboard = () => {
                     <p className="text-2xl font-bold text-brown-800">{userStats.totalSales}</p>
                 </div>
                 <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
-                    <span className="text-brown-600 font-bold">₹</span>
+                    <span className="text-brown-600 font-bold">RWF</span>
                 </div>
                 </div>
             </CardContent>
@@ -136,10 +136,10 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm font-medium text-brown-600">Total Earnings</p>
-                    <p className="text-2xl font-bold text-brown-800">₹{userStats.totalEarnings}</p>
+                    <p className="text-2xl font-bold text-brown-800">RWF {userStats.totalEarnings}</p>
                 </div>
                 <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
-                    <span className="text-brown-600 font-bold">₹</span>
+                    <span className="text-brown-600 font-bold">RWF</span>
                 </div>
                 </div>
             </CardContent>
@@ -220,7 +220,7 @@ const Dashboard = () => {
                     <CardContent>
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                        <span className="text-2xl font-bold text-brown-600">₹{listing.price}</span>
+                        <span className="text-2xl font-bold text-brown-600">RWF {listing.price}</span>
                         <span className="text-sm text-brown-500">{listing.views} views</span>
                         </div>
                         <div className="flex space-x-2">
