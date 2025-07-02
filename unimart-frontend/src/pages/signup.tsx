@@ -23,9 +23,9 @@ const Signup = () => {
     const universities = [
         "African Leadership University",
         "University of Rwanda",
-        "Makerere University",
-        "University of Nairobi",
-        "University of Cape Town",
+        "UGHE",
+        "AUCA",
+        "Carnegie Mellon University",
         "Other"
     ];
 
@@ -90,7 +90,7 @@ const Signup = () => {
                     <SelectTrigger className="pl-10 border-brown-300 focus:border-brown-500 bg-tan-50/50 transition-all duration-300">
                         <SelectValue placeholder="Select your university" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50 bg-tan-50 rounded-md shadow-lg">
                         {universities.map((uni) => (
                         <SelectItem key={uni} value={uni}>
                             {uni}

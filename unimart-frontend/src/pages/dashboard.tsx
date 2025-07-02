@@ -1,10 +1,11 @@
 
 import { useState } from "react";
-import { Plus, Search, Filter, Grid, List } from "lucide-react";
+import { Plus, Search, Filter, Grid, List, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Dashboard = () => {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -45,6 +46,36 @@ const Dashboard = () => {
         status: "active",
         views: 8,
         image: "/placeholder.svg"
+        }
+    ];
+
+    const conversations = [
+        {
+        id: 1,
+        name: "Sarah Johnson",
+        lastMessage: "Is the laptop still available?",
+        timestamp: "2 min ago",
+        unread: 2,
+        avatar: "/placeholder.svg",
+        item: "MacBook Pro 13-inch"
+        },
+        {
+        id: 2,
+        name: "Mike Chen",
+        lastMessage: "Thanks for the textbook!",
+        timestamp: "1 hour ago",
+        unread: 0,
+        avatar: "/placeholder.svg",
+        item: "Calculus Textbook"
+        },
+        {
+        id: 3,
+        name: "Anna Wilson",
+        lastMessage: "Can we meet tomorrow?",
+        timestamp: "3 hours ago",
+        unread: 1,
+        avatar: "/placeholder.svg",
+        item: "Study Desk"
         }
     ];
 
@@ -94,7 +125,7 @@ const Dashboard = () => {
                     <p className="text-2xl font-bold text-brown-800">{userStats.unreadMessages}</p>
                 </div>
                 <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
-                    <span className="text-brown-600 font-bold">!</span>
+                    <MessageCircle className="w-4 h-4 text-brown-600" />
                 </div>
                 </div>
             </CardContent>
@@ -117,8 +148,9 @@ const Dashboard = () => {
 
         {/* Main Content */}
         <Tabs defaultValue="listings" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 bg-brown-100/70 border-brown-200/50">
+            <TabsList className="grid w-full grid-cols-4 bg-brown-100/70 border-brown-200/50">
             <TabsTrigger value="listings" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">My Listings</TabsTrigger>
+            <TabsTrigger value="messages" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">Messages</TabsTrigger>
             <TabsTrigger value="purchases" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">My Purchases</TabsTrigger>
             <TabsTrigger value="wishlist" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">Wishlist</TabsTrigger>
             </TabsList>
@@ -204,6 +236,47 @@ const Dashboard = () => {
                 </Card>
                 ))}
             </div>
+            </TabsContent>
+
+            <TabsContent value="messages" className="space-y-6">
+            <Card className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
+                <CardHeader>
+                <CardTitle className="text-brown-800">Recent Conversations</CardTitle>
+                <CardDescription className="text-brown-600">Messages from buyers and sellers about your listings</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <div className="space-y-4">
+                    {conversations.map((conversation) => (
+                    <div
+                        key={conversation.id}
+                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-brown-100/50 transition-colors cursor-pointer"
+                    >
+                        <Avatar className="w-10 h-10">
+                        <AvatarImage src={conversation.avatar} />
+                        <AvatarFallback className="bg-brown-200 text-brown-700">
+                            {conversation.name.split(" ").map(n => n[0]).join("")}
+                        </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                            <p className="text-sm font-medium text-brown-800 truncate">
+                            {conversation.name}
+                            </p>
+                            <p className="text-xs text-brown-500">{conversation.timestamp}</p>
+                        </div>
+                        <p className="text-xs text-brown-600 mb-1 truncate">About: {conversation.item}</p>
+                        <p className="text-sm text-brown-600 truncate">{conversation.lastMessage}</p>
+                        </div>
+                        {conversation.unread > 0 && (
+                        <div className="w-5 h-5 bg-brown-600 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-tan-50 font-medium">{conversation.unread}</span>
+                        </div>
+                        )}
+                    </div>
+                    ))}
+                </div>
+                </CardContent>
+            </Card>
             </TabsContent>
 
             <TabsContent value="purchases">

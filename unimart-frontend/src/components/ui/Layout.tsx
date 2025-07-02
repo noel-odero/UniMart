@@ -1,6 +1,5 @@
-
 import { Link, useLocation } from "react-router-dom";
-import { Menu, User, MessageCircle, Home, LogOut } from "lucide-react";
+import { Menu, User, Home, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 
 interface LayoutProps {
@@ -13,8 +12,8 @@ interface LayoutProps {
 
     const navigation = [
         { name: "Home", href: "/", icon: Home },
+        { name: "Browse", href: "/browse", icon: ShoppingBag },
         { name: "Dashboard", href: "/dashboard", icon: User },
-        { name: "Messages", href: "/messages", icon: MessageCircle },
     ];
 
     return (
