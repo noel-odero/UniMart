@@ -1,11 +1,11 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const User = require('../models/User');
-const auth = require('../middleware/auth');
-const { sendVerificationEmail, sendPasswordResetEmail, generateVerificationToken } = require('../utils/emailService');
-const { body, validationResult } = require('express-validator');
-const rateLimit = require('express-rate-limit');
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import User from '../models/User.js';
+import auth from '../middleware/auth.js';
+import { sendVerificationEmail, sendPasswordResetEmail, generateVerificationToken } from '../utils/emailService.js';
+import { body, validationResult } from 'express-validator';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
 
@@ -167,7 +167,7 @@ const authLimiter = rateLimit({
         const user = await User.findById(req.user.userId)
         .select('-password -emailVerificationToken -resetPasswordToken')
         .populate('wishlist', 'title price images category condition');
-        
+
         if (!user) {
         return res.status(404).json({ message: 'User not found' });
         }
@@ -258,4 +258,4 @@ const authLimiter = rateLimit({
     }
 });
 
-module.exports = router;
+export default router;

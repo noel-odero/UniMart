@@ -1,16 +1,17 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
-require('dotenv').config();
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import dotenv from 'dotenv';
+import authRoutes from './Complete routes/auth.js';
+import listingRoutes from './Complete routes/listings.js';
+import messageRoutes from './Complete routes/messages.js';
+import { handleConnection } from './socket/socketHandler.js';
 
-const authRoutes = require('./routes/auth');
-const listingRoutes = require('./routes/listings');
-const messageRoutes = require('./routes/messages');
-const { handleConnection } = require('./socket/socketHandler');
+dotenv.config();
 
 const app = express();
 const server = createServer(app);
@@ -35,23 +36,25 @@ const io = new Server(server, {
     // Rate limiting
     const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 100,
     message: { message: 'Too many requests from this IP, please try again later' }
     });
     app.use('/api', limiter);
 
-    // Body parsing middleware
+    // Body parsing
     app.use(express.json({ limit: '10mb' }));
     app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
     // Database connection
     mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
-    useUnifiedTopology: true,
+    useUnifiedTopology: true
     })
     .then(() => console.log('MongoDB Connected'))
     .catch(err => console.log('MongoDB connection error:', err));
 
+
+    
     // Routes
     app.use('/api/auth', authRoutes);
     app.use('/api/listings', listingRoutes);
@@ -60,17 +63,17 @@ const io = new Server(server, {
     // Health check endpoint
     app.get('/api/health', (req, res) => {
     res.json({ 
-        status: 'OK', 
+        status: 'OK',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         environment: process.env.NODE_ENV || 'development'
     });
     });
 
-    // Socket.IO connection handling
+    // Socket.IO connection
     handleConnection(io);
 
-    // Error handling middleware
+    // Error handler
     app.use((err, req, res, next) => {
     console.error('Error:', err);
     res.status(500).json({ 
@@ -90,4 +93,4 @@ const io = new Server(server, {
     console.log(`Server running on port ${PORT}`);
 });
 
-module.exports = { app, server, io };
+export { app, server, io };

@@ -1,81 +1,80 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-const listingSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true,
-        trim: true,
-        maxlength: 100
-    },
-    description: {
-        type: String,
-        required: true,
-        maxlength: 1000
-    },
-    price: {
-        type: Number,
-        required: true,
-        min: 0
-    },
-    category: {
-        type: String,
-        required: true,
-        enum: ['Electronics', 'Books', 'Furniture', 'Clothing', 'Sports', 'Other']
-    },
-    condition: {
-        type: String,
-        required: true,
-        enum: ['New', 'Like New', 'Good', 'Fair', 'Poor']
-    },
-    images: [{
-        type: String,
+const conversationSchema = new mongoose.Schema({
+    participants: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true
     }],
-    seller: {
+    listing: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Listing',
+        required: true
+    },
+    lastMessage: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message'
+    },
+    lastActivity: {
+        type: Date,
+        default: Date.now
+    }
+    }, {
+    timestamps: true
+    });
+
+    const messageSchema = new mongoose.Schema({
+    conversation: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Conversation',
+        required: true
+    },
+    sender: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    buyer: {
+    recipient: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        required: true
     },
-    status: {
+    content: {
         type: String,
-        enum: ['active', 'sold', 'removed'],
-        default: 'active'
+        required: true,
+        maxlength: 1000
     },
-    views: {
-        type: Number,
-        default: 0
+    messageType: {
+        type: String,
+        enum: ['text', 'image', 'offer'],
+        default: 'text'
     },
-    viewedBy: [{
-        user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-        },
-        viewedAt: {
-        type: Date,
-        default: Date.now
-        }
-    }],
-    location: String,
-    university: String,
-    tags: [String],
-    isNegotiable: {
+    isRead: {
         type: Boolean,
-        default: true
+        default: false
     },
-    soldAt: Date,
-    soldPrice: Number
+    readAt: Date,
+    listing: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Listing'
+    },
+    offer: {
+        amount: Number,
+        status: {
+        type: String,
+        enum: ['pending', 'accepted', 'rejected'],
+        default: 'pending'
+        }
+    }
     }, {
     timestamps: true
 });
 
-listingSchema.index({ title: 'text', description: 'text', tags: 'text' });
-listingSchema.index({ category: 1, status: 1 });
-listingSchema.index({ seller: 1, status: 1 });
-listingSchema.index({ price: 1 });
-listingSchema.index({ createdAt: -1 });
+messageSchema.index({ conversation: 1, createdAt: -1 });
+messageSchema.index({ sender: 1, recipient: 1 });
 
-module.exports = mongoose.model('Listing', listingSchema);
+const Conversation = mongoose.model('Conversation', conversationSchema);
+const Message = mongoose.model('Message', messageSchema);
+
+
+export { Conversation, Message };

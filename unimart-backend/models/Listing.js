@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const listingSchema = new mongoose.Schema({
     title: {
@@ -51,12 +51,12 @@ const listingSchema = new mongoose.Schema({
     },
     viewedBy: [{
         user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
         },
         viewedAt: {
-        type: Date,
-        default: Date.now
+            type: Date,
+            default: Date.now
         }
     }],
     location: String,
@@ -68,7 +68,7 @@ const listingSchema = new mongoose.Schema({
     },
     soldAt: Date,
     soldPrice: Number
-    }, {
+}, {
     timestamps: true
 });
 
@@ -78,4 +78,4 @@ listingSchema.index({ seller: 1, status: 1 });
 listingSchema.index({ price: 1 });
 listingSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model('Listing', listingSchema);
+export default mongoose.model('Listing', listingSchema);

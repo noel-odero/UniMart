@@ -1,7 +1,7 @@
-const nodemailer = require('nodemailer');
-const crypto = require('crypto');
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   service: 'gmail', // or your email service
     auth: {
         user: process.env.EMAIL_USER,
@@ -9,13 +9,13 @@ const transporter = nodemailer.createTransporter({
     }
     });
 
-    const generateVerificationToken = () => {
+    export const generateVerificationToken = () => {
     return crypto.randomBytes(32).toString('hex');
     };
 
-    const sendVerificationEmail = async (user, token) => {
+    export const sendVerificationEmail = async (user, token) => {
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${token}`;
-    
+
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: user.email,
@@ -42,9 +42,9 @@ const transporter = nodemailer.createTransporter({
     await transporter.sendMail(mailOptions);
     };
 
-    const sendPasswordResetEmail = async (user, token) => {
+    export const sendPasswordResetEmail = async (user, token) => {
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-    
+
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: user.email,
@@ -69,10 +69,4 @@ const transporter = nodemailer.createTransporter({
     };
 
     await transporter.sendMail(mailOptions);
-    };
-
-    module.exports = {
-    generateVerificationToken,
-    sendVerificationEmail,
-    sendPasswordResetEmail
 };

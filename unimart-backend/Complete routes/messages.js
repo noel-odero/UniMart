@@ -1,9 +1,9 @@
-const express = require('express');
-const { Conversation, Message } = require('../models/Message');
-const User = require('../models/User');
-const Listing = require('../models/Listing');
-const auth = require('../middleware/auth');
-const { body, validationResult } = require('express-validator');
+import express from 'express';
+import { Conversation, Message } from '../models/Message.js';
+import User from '../models/User.js';
+import Listing from '../models/Listing.js';
+import auth from '../middleware/auth.js';
+import { body, validationResult } from 'express-validator';
 
 const router = express.Router();
 
@@ -225,7 +225,7 @@ router.get('/conversations', auth, async (req, res) => {
         });
 
         if (conversation) {
-        return res.status(400).json({ 
+        return res.status(400).json({
             message: 'Conversation already exists',
             conversationId: conversation._id
         });
@@ -273,7 +273,7 @@ router.get('/conversations', auth, async (req, res) => {
         });
         }
 
-        res.status(201).json({ 
+        res.status(201).json({
         conversation,
         message,
         messageText: 'Conversation started successfully'
@@ -328,4 +328,5 @@ router.get('/conversations', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
+
