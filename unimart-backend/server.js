@@ -6,9 +6,9 @@ import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
-import authRoutes from './Complete routes/auth.js';
-import listingRoutes from './Complete routes/listings.js';
-import messageRoutes from './Complete routes/messages.js';
+import authRoutes from './CompleteRoutes/auth.js';
+import listingRoutes from './CompleteRoutes/listings.js';
+import messageRoutes from './CompleteRoutes/messages.js';
 import { handleConnection } from './socket/socketHandler.js';
 
 dotenv.config();
@@ -56,6 +56,9 @@ const io = new Server(server, {
 
     
     // Routes
+    // console.log('authRoutes:', authRoutes);
+    // console.log('listingRoutes:', listingRoutes);
+    // console.log('messageRoutes:', messageRoutes);
     app.use('/api/auth', authRoutes);
     app.use('/api/listings', listingRoutes);
     app.use('/api/messages', messageRoutes);
@@ -87,7 +90,7 @@ const io = new Server(server, {
     res.status(404).json({ message: 'Route not found' });
     });
 
-    const PORT = process.env.PORT || 5000;
+    const PORT = process.env.PORT || 5001;
 
     server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
