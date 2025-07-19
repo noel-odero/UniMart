@@ -6,24 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useLogin } from "@/features/auth";
 
 const Login = () => {
+    const { mutate, isPending } = useLogin();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
-        
-        // TODO: Implement login logic with Supabase
-        console.log("Login attempt:", { email, password });
-        
-        // Simulate API call
-        setTimeout(() => {
-        setIsLoading(false);
-        }, 1000);
+        mutate({ email, password });
     };
 
     return (
@@ -96,9 +89,9 @@ const Login = () => {
                 <Button 
                 type="submit" 
                 className="w-full bg-gradient-to-r from-brown-600 to-brown-700 hover:from-brown-700 hover:to-brown-800 button-3d transform hover:scale-105 transition-all duration-300"
-                disabled={isLoading}
+                disabled={isPending}
                 >
-                {isLoading ? "Signing in..." : "Sign In"}
+                {isPending ? "Signing in..." : "Sign In"}
                 </Button>
                 
                 <div className="text-center text-sm text-brown-600">

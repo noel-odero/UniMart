@@ -6,84 +6,87 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/auth-context";
+
+const userStats = {
+    activeListings: 5,
+    totalSales: 12,
+    unreadMessages: 3,
+    totalEarnings: 450
+};
+
+const recentListings = [
+    {
+    id: 1,
+    title: "MacBook Pro 13-inch",
+    price: 800,
+    category: "Electronics",
+    status: "active",
+    views: 24,
+    image: "/placeholder.svg"
+    },
+    {
+    id: 2,
+    title: "Calculus Textbook",
+    price: 45,
+    category: "Books",
+    status: "sold",
+    views: 12,
+    image: "/placeholder.svg"
+    },
+    {
+    id: 3,
+    title: "Study Desk",
+    price: 120,
+    category: "Furniture",
+    status: "active",
+    views: 8,
+    image: "/placeholder.svg"
+    }
+];
+
+const conversations = [
+    {
+    id: 1,
+    name: "Sarah Johnson",
+    lastMessage: "Is the laptop still available?",
+    timestamp: "2 min ago",
+    unread: 2,
+    avatar: "/placeholder.svg",
+    item: "MacBook Pro 13-inch"
+    },
+    {
+    id: 2,
+    name: "Mike Chen",
+    lastMessage: "Thanks for the textbook!",
+    timestamp: "1 hour ago",
+    unread: 0,
+    avatar: "/placeholder.svg",
+    item: "Calculus Textbook"
+    },
+    {
+    id: 3,
+    name: "Anna Wilson",
+    lastMessage: "Can we meet tomorrow?",
+    timestamp: "3 hours ago",
+    unread: 1,
+    avatar: "/placeholder.svg",
+    item: "Study Desk"
+    }
+];
 
 const Dashboard = () => {
+    const { user } = useAuth();
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [searchQuery, setSearchQuery] = useState("");
 
     // Mock data - will be replaced with Supabase data
-    const userStats = {
-        activeListings: 5,
-        totalSales: 12,
-        unreadMessages: 3,
-        totalEarnings: 450
-    };
-
-    const recentListings = [
-        {
-        id: 1,
-        title: "MacBook Pro 13-inch",
-        price: 800,
-        category: "Electronics",
-        status: "active",
-        views: 24,
-        image: "/placeholder.svg"
-        },
-        {
-        id: 2,
-        title: "Calculus Textbook",
-        price: 45,
-        category: "Books",
-        status: "sold",
-        views: 12,
-        image: "/placeholder.svg"
-        },
-        {
-        id: 3,
-        title: "Study Desk",
-        price: 120,
-        category: "Furniture",
-        status: "active",
-        views: 8,
-        image: "/placeholder.svg"
-        }
-    ];
-
-    const conversations = [
-        {
-        id: 1,
-        name: "Sarah Johnson",
-        lastMessage: "Is the laptop still available?",
-        timestamp: "2 min ago",
-        unread: 2,
-        avatar: "/placeholder.svg",
-        item: "MacBook Pro 13-inch"
-        },
-        {
-        id: 2,
-        name: "Mike Chen",
-        lastMessage: "Thanks for the textbook!",
-        timestamp: "1 hour ago",
-        unread: 0,
-        avatar: "/placeholder.svg",
-        item: "Calculus Textbook"
-        },
-        {
-        id: 3,
-        name: "Anna Wilson",
-        lastMessage: "Can we meet tomorrow?",
-        timestamp: "3 hours ago",
-        unread: 1,
-        avatar: "/placeholder.svg",
-        item: "Study Desk"
-        }
-    ];
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-tan-50 via-brown-50 to-tan-100 min-h-screen animate-fade-in">
         {/* Welcome Section */}
         <div className="mb-8">
-            <h1 className="text-3xl font-bold text-brown-800 mb-2 text-shadow">Welcome back!</h1>
+            <h1 className="text-3xl font-bold text-brown-800 mb-2 text-shadow">Welcome back, {user?.fullName?.split(" ")[0]}!</h1>
             <p className="text-brown-600">Manage your listings and connect with your campus community.</p>
         </div>
 

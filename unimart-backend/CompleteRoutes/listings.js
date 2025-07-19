@@ -70,6 +70,11 @@ router.get('/user/purchases', auth, async (req, res) => {
     }
 });
 
+
+router.post('/create/purchase', auth , async (req,res) => {
+    
+})
+
 // ---------- General Routes ----------
 
 // Get all listings
@@ -148,19 +153,22 @@ router.post('/', auth, [
     body('title').trim().isLength({ min: 1, max: 100 }),
     body('description').trim().isLength({ min: 10, max: 1000 }),
     body('price').isFloat({ min: 0 }),
-    body('category').isIn(['Electronics', 'Books', 'Furniture', 'Clothing', 'Sports', 'Other']),
+    body('category').isIn(['Electronics', 'Books', 'Furniture', 'Clothing','Food', 'Sports', 'Other']),
     body('condition').isIn(['New', 'Like New', 'Good', 'Fair', 'Poor']),
-    body('images').isArray({ min: 1 })
+    body('images').isArray({ min: 1 }),
+    body('university').isString()
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-        const user = await User.findById(req.user.userId);
+        // console.log(req.user, "In create")
+        const user = req.user
+        // const user = await User.findById(req.user._id);
 
         const listing = new Listing({
             ...req.body,
-            seller: req.user.userId,
+            seller: req.user._id,
             university: user.university,
             location: user.location || user.university
         });
