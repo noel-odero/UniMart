@@ -7,43 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-
-const userStats = {
-    activeListings: 5,
-    totalSales: 12,
-    unreadMessages: 3,
-    totalEarnings: 450
-};
-
-const recentListings = [
-    {
-    id: 1,
-    title: "MacBook Pro 13-inch",
-    price: 800,
-    category: "Electronics",
-    status: "active",
-    views: 24,
-    image: "/placeholder.svg"
-    },
-    {
-    id: 2,
-    title: "Calculus Textbook",
-    price: 45,
-    category: "Books",
-    status: "sold",
-    views: 12,
-    image: "/placeholder.svg"
-    },
-    {
-    id: 3,
-    title: "Study Desk",
-    price: 120,
-    category: "Furniture",
-    status: "active",
-    views: 8,
-    image: "/placeholder.svg"
-    }
-];
+import { useGetUserListings } from "@/features/listings";
 
 const conversations = [
     {
@@ -80,7 +44,17 @@ const Dashboard = () => {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Mock data - will be replaced with Supabase data
+    // Get user's listings
+    const { data: listingsData, isLoading, error } = useGetUserListings();
+    const listings = listingsData?.listings || [];
+
+    // Calculate real stats from listings
+    const activeListings = listings.filter(listing => listing.status === 'active').length;
+    const soldListings = listings.filter(listing => listing.status === 'sold').length;
+    const totalViews = listings.reduce((sum, listing) => sum + listing.views, 0);
+    const totalEarnings = listings
+      .filter(listing => listing.status === 'sold')
+      .reduce((sum, listing) => sum + listing.price, 0);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-tan-50 via-brown-50 to-tan-100 min-h-screen animate-fade-in">
@@ -97,7 +71,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm font-medium text-brown-600">Active Listings</p>
-                    <p className="text-2xl font-bold text-brown-800">{userStats.activeListings}</p>
+                    <p className="text-2xl font-bold text-brown-800">{activeListings}</p>
                 </div>
                 <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
                     <Grid className="w-4 h-4 text-brown-600" />
@@ -111,7 +85,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm font-medium text-brown-600">Total Sales</p>
-                    <p className="text-2xl font-bold text-brown-800">{userStats.totalSales}</p>
+                    <p className="text-2xl font-bold text-brown-800">{soldListings}</p>
                 </div>
                 <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
                     <span className="text-brown-600 font-bold">RWF</span>
@@ -125,7 +99,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm font-medium text-brown-600">Unread Messages</p>
-                    <p className="text-2xl font-bold text-brown-800">{userStats.unreadMessages}</p>
+                    <p className="text-2xl font-bold text-brown-800">3</p>
                 </div>
                 <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
                     <MessageCircle className="w-4 h-4 text-brown-600" />
@@ -138,8 +112,22 @@ const Dashboard = () => {
             <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                 <div>
+                    <p className="text-sm font-medium text-brown-600">Total Views</p>
+                    <p className="text-2xl font-bold text-brown-800">{totalViews}</p>
+                </div>
+                <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
+                    <span className="text-brown-600 font-bold">👁</span>
+                </div>
+                </div>
+            </CardContent>
+            </Card>
+
+            <Card className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
+            <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                <div>
                     <p className="text-sm font-medium text-brown-600">Total Earnings</p>
-                    <p className="text-2xl font-bold text-brown-800">RWF {userStats.totalEarnings}</p>
+                    <p className="text-2xl font-bold text-brown-800">RWF {totalEarnings}</p>
                 </div>
                 <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
                     <span className="text-brown-600 font-bold">RWF</span>
@@ -202,9 +190,22 @@ const Dashboard = () => {
             </div>
 
             {/* Listings Grid/List */}
-            <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
-                {recentListings.map((listing) => (
-                <Card key={listing.id} className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
+            {isLoading ? (
+              <div className="text-center py-8">
+                <p className="text-brown-600">Loading your listings...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-red-600">Error loading listings: {error.message}</p>
+              </div>
+            ) : listings.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-brown-500">No listings yet. Create your first listing!</p>
+              </div>
+            ) : (
+              <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+                {listings.map((listing) => (
+                <Card key={listing._id} className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
                     <CardHeader className="pb-4">
                     <div className="flex justify-between items-start">
                         <div>
@@ -238,7 +239,8 @@ const Dashboard = () => {
                     </CardContent>
                 </Card>
                 ))}
-            </div>
+              </div>
+            )}
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">

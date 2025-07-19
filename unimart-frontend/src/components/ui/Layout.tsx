@@ -1,7 +1,9 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, User, Home, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useGetMe } from "@/features/auth";
+import { cn } from "@/lib/utils";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,15 +12,23 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const navigation = [
     { name: "Home", href: "/", icon: Home },
     { name: "Browse", href: "/browse", icon: ShoppingBag },
     { name: "Dashboard", href: "/dashboard", icon: User },
   ];
 
-  const { user } = useAuth();
-  console.log(user);
+  const { data } = useGetMe();
+  const noUser = !data?.user
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  }
+  // const user = userData?
+  console.log(data);
   return (
     <div className="min-h-screen bg-gradient-to-br from-tan-50 via-brown-50 to-tan-100">
       {/* Header */}
@@ -43,11 +53,11 @@ const Layout = ({ children }: LayoutProps) => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                    className={cn(`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                       location.pathname === item.href
                         ? "text-brown-800 bg-tan-200/70 shadow-md"
                         : "text-brown-600 hover:text-brown-800 hover:bg-tan-100/50 hover:shadow-md"
-                    }`}
+                    }`, noUser && item.href === "/dashboard" && "hidden")}
                   >
                     <Icon className="w-4 h-4 mr-2" />
                     {item.name}
@@ -58,13 +68,20 @@ const Layout = ({ children }: LayoutProps) => {
 
             {/* Desktop Auth Actions */}
             <div className="hidden md:flex items-center space-x-4">
-              {user ? (
+              {data?.user ? (
+                <>
+                
                 <Link
                   to="/dashboard"
                   className="text-brown-600 hover:text-brown-800 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-tan-100/50"
                 >
-                  {user.fullName}
+                  {data?.user.fullName}
                 </Link>
+                <button onClick={handleLogout} className="text-brown-600 hover:text-brown-800 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-tan-100/50">
+                  Logout
+                </button>
+                
+                </>
               ) : (
                 <>
                   <Link

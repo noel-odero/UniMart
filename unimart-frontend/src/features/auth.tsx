@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/auth-context";
 import type { AuthResponse } from "@/types/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -57,12 +58,19 @@ export async function logout(token: string): Promise<AuthResponse> {
 export function useLogin() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { setUser, setToken } = useAuth();
   return useMutation<AuthResponse, Error, { email: string; password: string }>({
     mutationFn: login,
     onSuccess: (data) => {
       console.log(data);
       localStorage.setItem("token", data?.token || "");
       localStorage.setItem("user", JSON.stringify(data.user));
+      if(data?.user) {
+        setUser(data?.user);
+      }
+      if(data?.token) {
+        setToken(data?.token);
+      }
       queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Login successful");
       navigate("/dashboard");
