@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Lock, User, School, Eye, EyeOff } from "lucide-react";
+import { useRegister } from "@/features/auth";
 
 const Signup = () => {
+    const { mutate, isPending } = useRegister();
     const [formData, setFormData] = useState({
         fullName: "",
         email: "",
@@ -18,7 +20,6 @@ const Signup = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
 
     const universities = [
         "African Leadership University",
@@ -40,16 +41,7 @@ const Signup = () => {
         alert("Passwords don't match!");
         return;
         }
-        
-        setIsLoading(true);
-        
-        // TODO: Implement signup logic with Supabase
-        console.log("Signup attempt:", formData);
-        
-        // Simulate API call
-        setTimeout(() => {
-        setIsLoading(false);
-        }, 1000);
+        mutate(formData);
     };
 
     return (
@@ -171,9 +163,9 @@ const Signup = () => {
                 <Button 
                 type="submit" 
                 className="w-full bg-gradient-to-r from-brown-600 to-brown-700 hover:from-brown-700 hover:to-brown-800 button-3d transform hover:scale-105 transition-all duration-300"
-                disabled={isLoading}
+                disabled={isPending}
                 >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isPending ? "Creating Account..." : "Create Account"}
                 </Button>
                 
                 <div className="text-center text-sm text-brown-600">

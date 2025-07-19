@@ -1,5 +1,5 @@
 import type { AuthResponse } from "@/types/auth";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -18,6 +18,18 @@ export async function register(data: {
   });
   return res.json();
 }
+
+
+export async function getMe(token: string): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.json();
+}
+
 
 export async function login(data: {
   email: string;
@@ -44,11 +56,14 @@ export async function logout(token: string): Promise<AuthResponse> {
 
 export function useLogin() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   return useMutation<AuthResponse, Error, { email: string; password: string }>({
     mutationFn: login,
     onSuccess: (data) => {
+      console.log(data);
       localStorage.setItem("token", data?.token || "");
       localStorage.setItem("user", JSON.stringify(data.user));
+      queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success("Login successful");
       navigate("/dashboard");
     },
@@ -59,7 +74,31 @@ export function useLogin() {
 }
 
 export function useRegister() {
-  return useMutation<AuthResponse, Error, { fullName: string; email: string; university: string; password: string }>({
+  const navigate = useNavigate();
+  return useMutation<
+    AuthResponse,
+    Error,
+    { fullName: string; email: string; university: string; password: string }
+  >({
     mutationFn: register,
+    onSuccess: (data) => {
+      toast.success(
+        `Registration successful, please login to continue ${data?.user?.fullName}`
+      );
+      navigate("/login");
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error("Registration failed, please try again");
+    },
   });
 }
+
+export function useGetMe() {
+  return useQuery<AuthResponse, Error, { token: string }>({
+    queryFn: () => getMe(localStorage.getItem("token") || ""),
+    queryKey: ["me"],
+    enabled: !!localStorage.getItem("token"),
+  });
+}
+
