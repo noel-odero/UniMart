@@ -123,7 +123,6 @@ const Browse = () => {
   const { data } = useGetListings();
   const listings = data?.listings || [];
 
-//   console.log(data?.listings);
 
 
   const filteredListings = listings.filter((listing) => {

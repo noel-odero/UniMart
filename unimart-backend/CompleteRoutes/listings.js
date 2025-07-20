@@ -17,7 +17,7 @@ router.get('/user/my-listings', auth, async (req, res) => {
         const { status = 'active', page = 1, limit = 10 } = req.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
-        const filter = { seller: req.user.userId };
+        const filter = { seller: req.user._id };
         if (status !== 'all') filter.status = status;
 
         const listings = await Listing.find(filter)
@@ -47,14 +47,14 @@ router.get('/user/purchases', auth, async (req, res) => {
         const { page = 1, limit = 10 } = req.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
-        const purchases = await Purchase.find({ buyer: req.user.userId })
+        const purchases = await Purchase.find({ buyer: req.user._id })
             .populate('listing', 'title price images category condition')
             .populate('seller', 'fullName university avatar')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
 
-        const total = await Purchase.countDocuments({ buyer: req.user.userId });
+        const total = await Purchase.countDocuments({ buyer: req.user._id });
 
         res.json({
             purchases,
@@ -197,7 +197,7 @@ router.put('/:id', auth, [
 
         const listing = await Listing.findOne({
             _id: req.params.id,
-            seller: req.user.userId
+            seller: req.user._id
         });
 
         if (!listing) return res.status(404).json({ message: 'Listing not found or you are not the seller' });
@@ -224,7 +224,7 @@ router.post('/:id/sold', auth, [
 
         const listing = await Listing.findOne({
             _id: req.params.id,
-            seller: req.user.userId,
+            seller: req.user._id,
             status: 'active'
         });
 
@@ -239,7 +239,7 @@ router.post('/:id/sold', auth, [
 
         await listing.save();
 
-        const seller = await User.findById(req.user.userId);
+        const seller = await User.findById(req.user._id);
         seller.totalSales += 1;
         seller.totalEarnings += listing.soldPrice;
         await seller.save();
@@ -247,7 +247,7 @@ router.post('/:id/sold', auth, [
         if (buyerId) {
             const purchase = new Purchase({
                 buyer: buyerId,
-                seller: req.user.userId,
+                seller: req.user._id,
                 listing: listing._id,
                 purchasePrice: listing.soldPrice,
                 status: 'completed',
@@ -269,7 +269,7 @@ router.post('/:id/wishlist', auth, async (req, res) => {
         const listing = await Listing.findById(req.params.id);
         if (!listing) return res.status(404).json({ message: 'Listing not found' });
 
-        const user = await User.findById(req.user.userId);
+        const user = await User.findById(req.user._id);
         const isInWishlist = user.wishlist.includes(listing._id);
 
         if (isInWishlist) {
@@ -295,11 +295,11 @@ router.get('/:id', async (req, res) => {
 
         if (!listing) return res.status(404).json({ message: 'Listing not found' });
 
-        if (req.user && req.user.userId.toString() !== listing.seller._id.toString()) {
-            const hasViewed = listing.viewedBy.some(view => view.user.toString() === req.user.userId.toString());
+        if (req.user && req.user._id.toString() !== listing.seller._id.toString()) {
+            const hasViewed = listing.viewedBy.some(view => view.user.toString() === req.user._id.toString());
             if (!hasViewed) {
                 listing.views += 1;
-                listing.viewedBy.push({ user: req.user.userId });
+                listing.viewedBy.push({ user: req.user._id });
                 await listing.save();
             }
         }

@@ -7,7 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-import { useGetUserListings } from "@/features/listings";
+import { useGetMyListings } from "@/features/listings";
+import { useGetConversations } from "@/features/conversations";
+import { formatTimestamp } from "@/lib/utils";
+import ConversationDetail from "@/components/ConversationDetail";
+import type { Conversation } from "@/features/conversations";
 
 const conversations = [
     {
@@ -43,10 +47,16 @@ const Dashboard = () => {
     const { user } = useAuth();
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
 
     // Get user's listings
-    const { data: listingsData, isLoading, error } = useGetUserListings();
+    const { data: listingsData, isLoading, error } = useGetMyListings();
     const listings = listingsData?.listings || [];
+    console.log(listings)
+
+    // Get conversations
+    const { data: conversationsData } = useGetConversations();
+    const conversations = conversationsData?.conversations || [];
 
     // Calculate real stats from listings
     const activeListings = listings.filter(listing => listing.status === 'active').length;
@@ -55,6 +65,29 @@ const Dashboard = () => {
     const totalEarnings = listings
       .filter(listing => listing.status === 'sold')
       .reduce((sum, listing) => sum + listing.price, 0);
+    
+    // Calculate total unread messages
+    const totalUnreadMessages = conversations.reduce((sum, conversation) => sum + conversation.unreadCount, 0);
+
+    const handleConversationClick = (conversation: Conversation) => {
+        setSelectedConversation(conversation);
+    };
+
+    const handleBackToList = () => {
+        setSelectedConversation(null);
+    };
+
+    // If a conversation is selected, show the detail view
+    if (selectedConversation) {
+        return (
+            <div className="h-screen">
+                <ConversationDetail 
+                    conversation={selectedConversation} 
+                    onBack={handleBackToList} 
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-tan-50 via-brown-50 to-tan-100 min-h-screen animate-fade-in">
@@ -99,7 +132,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm font-medium text-brown-600">Unread Messages</p>
-                    <p className="text-2xl font-bold text-brown-800">3</p>
+                    <p className="text-2xl font-bold text-brown-800">{totalUnreadMessages}</p>
                 </div>
                 <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
                     <MessageCircle className="w-4 h-4 text-brown-600" />
@@ -251,34 +284,35 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                 <div className="space-y-4">
-                    {conversations.map((conversation) => (
+                    {conversations.map((conversation) => 
                     <div
-                        key={conversation.id}
+                        key={conversation._id}
                         className="flex items-center space-x-3 p-3 rounded-lg hover:bg-brown-100/50 transition-colors cursor-pointer"
+                        onClick={() => handleConversationClick(conversation)}
                     >
                         <Avatar className="w-10 h-10">
-                        <AvatarImage src={conversation.avatar} />
+                        <AvatarImage src={conversation.participants[0].avatar} />
                         <AvatarFallback className="bg-brown-200 text-brown-700">
-                            {conversation.name.split(" ").map(n => n[0]).join("")}
+                            {conversation.participants[0].fullName.split(" ").map(n => n[0]).join("")}
                         </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-1">
                             <p className="text-sm font-medium text-brown-800 truncate">
-                            {conversation.name}
+                            {conversation.participants[0].fullName}
                             </p>
-                            <p className="text-xs text-brown-500">{conversation.timestamp}</p>
+                            <p className="text-xs text-brown-500">{formatTimestamp(conversation.lastActivity)}</p>
                         </div>
-                        <p className="text-xs text-brown-600 mb-1 truncate">About: {conversation.item}</p>
-                        <p className="text-sm text-brown-600 truncate">{conversation.lastMessage}</p>
+                        <p className="text-xs text-brown-600 mb-1 truncate">About: {conversation.listing.title}</p>
+                        <p className="text-sm text-brown-600 truncate">{conversation.lastMessage?.content}</p>
                         </div>
-                        {conversation.unread > 0 && (
+                        {conversation.unreadCount > 0 && (
                         <div className="w-5 h-5 bg-brown-600 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-tan-50 font-medium">{conversation.unread}</span>
+                            <span className="text-xs text-tan-50 font-medium">{conversation.unreadCount}</span>
                         </div>
                         )}
                     </div>
-                    ))}
+                    )}
                 </div>
                 </CardContent>
             </Card>

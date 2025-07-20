@@ -20,8 +20,7 @@ const features = [
   {
     icon: Users,
     title: "Student Community",
-    description:
-      "Connect with fellow students and build trusted relationships",
+    description: "Connect with fellow students and build trusted relationships",
   },
   {
     icon: Shield,
@@ -46,7 +45,6 @@ const stats = [
 const Index = () => {
   const { user } = useAuth();
 
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -63,26 +61,29 @@ const Index = () => {
             Buy, sell, and trade with fellow students in your university
             community. Safe, simple, and tailored for African campuses.
           </p>
-          <div
-            className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up"
-            style={{ animationDelay: "0.4s" }}
-          >
-            <Button
-              asChild
-              size="lg"
-              className="text-lg px-8 py-3 bg-gradient-to-r from-brown-600 to-brown-700 hover:from-brown-700 hover:to-brown-800 button-3d transform hover:scale-105"
+
+          {!!user ? null : (
+            <div
+              className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up"
+              style={{ animationDelay: "0.4s" }}
             >
-              <Link to="/signup">Get Started</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="text-lg px-8 py-3 border-brown-300 text-brown-700 hover:bg-tan-100 button-3d transform hover:scale-105"
-            >
-              <Link to="/login">Sign In</Link>
-            </Button>
-          </div>
+              <Button
+                asChild
+                size="lg"
+                className="text-lg px-8 py-3 bg-gradient-to-r from-brown-600 to-brown-700 hover:from-brown-700 hover:to-brown-800 button-3d transform hover:scale-105"
+              >
+                <Link to="/signup">Get Started</Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="text-lg px-8 py-3 border-brown-300 text-brown-700 hover:bg-tan-100 button-3d transform hover:scale-105"
+              >
+                <Link to="/login">Sign In</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 

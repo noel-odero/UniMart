@@ -28,7 +28,6 @@ const Layout = ({ children }: LayoutProps) => {
     navigate("/");
   }
   // const user = userData?
-  console.log(data);
   return (
     <div className="min-h-screen bg-gradient-to-br from-tan-50 via-brown-50 to-tan-100">
       {/* Header */}
