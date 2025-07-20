@@ -18,6 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useGetListings } from "@/features/listings";
+import { useStartConversation } from "@/features/conversations";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const listings = [
   {
@@ -147,6 +151,34 @@ const Browse = () => {
     }
   });
 
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [messageListing, setMessageListing] = useState<any>(null);
+  const startConversation = useStartConversation();
+  const navigate = useNavigate();
+
+  const handleOpenMessageModal = (listing: any) => {
+    setMessageListing(listing);
+    setMessageText("");
+    setMessageModalOpen(true);
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageListing || !messageText.trim()) return;
+    startConversation.mutate(
+      { listingId: messageListing._id, initialMessage: messageText },
+      {
+        onSuccess: (data) => {
+          setMessageModalOpen(false);
+          setMessageText("");
+          setMessageListing(null);
+          // Navigate to messages page (optionally open the conversation)
+          navigate("/messages");
+        },
+      }
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-tan-50 via-brown-50 to-tan-100 min-h-screen animate-fade-in">
       {/* Header */}
@@ -259,15 +291,9 @@ const Browse = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`p-1 ${
-                    listing.isFavorited ? "text-red-500" : "text-brown-400"
-                  } hover:text-red-500`}
+                  className="p-1 text-brown-400 hover:text-red-500"
                 >
-                  <Heart
-                    className={`w-4 h-4 ${
-                      listing.isFavorited ? "fill-current" : ""
-                    }`}
-                  />
+                  <Heart className="w-4 h-4" />
                 </Button>
               </div>
               <CardTitle className="text-lg text-brown-800 line-clamp-1">
@@ -316,6 +342,7 @@ const Browse = () => {
                     variant="outline"
                     size="sm"
                     className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
+                    onClick={() => handleOpenMessageModal(listing)}
                   >
                     Message
                   </Button>
@@ -338,6 +365,34 @@ const Browse = () => {
           <p className="text-brown-600">Try adjusting your search or filters</p>
         </div>
       )}
+
+      {/* Message Modal */}
+      <Dialog open={messageModalOpen} onOpenChange={setMessageModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Message Seller</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-brown-700">Send a message to the seller of <span className="font-semibold">{messageListing?.title}</span>:</p>
+            <Textarea
+              value={messageText}
+              onChange={e => setMessageText(e.target.value)}
+              placeholder="Type your message..."
+              className="min-h-[80px]"
+              maxLength={1000}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={handleSendMessage}
+              disabled={startConversation.isPending || !messageText.trim()}
+              className="bg-brown-600 hover:bg-brown-700"
+            >
+              {startConversation.isPending ? "Sending..." : "Send Message"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

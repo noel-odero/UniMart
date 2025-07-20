@@ -112,6 +112,101 @@ export async function getUserListings(params?: {
   return res.json();
 }
 
+export async function createListing(data: {
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  condition: string;
+  images: File[];
+}): Promise<{ listing: Listing; message: string }> {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No authentication token");
+  }
+
+  // Get user data to include university
+  const userResponse = await fetch(`${API_BASE}/auth/me`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (!userResponse.ok) {
+    throw new Error("Failed to get user data");
+  }
+  
+  const userData = await userResponse.json();
+  const university = userData.user?.university || "";
+
+  // Convert images to base64 strings for now
+  const imagePromises = data.images.map(file => {
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+  });
+
+  const imageUrls = await Promise.all(imagePromises);
+
+  const requestData = {
+    title: data.title,
+    description: data.description,
+    price: data.price,
+    category: data.category,
+    condition: data.condition,
+    university: university,
+    images: imageUrls
+  };
+
+  const res = await fetch(`${API_BASE}/listings`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(requestData),
+  });
+  
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to create listing");
+  }
+  
+  return res.json();
+}
+
+export async function updateListing(id: string, data: {
+  title?: string;
+  description?: string;
+  price?: number;
+  category?: string;
+  condition?: string;
+}): Promise<{ listing: Listing; message: string }> {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No authentication token");
+  }
+
+  const res = await fetch(`${API_BASE}/listings/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to update listing");
+  }
+  
+  return res.json();
+}
+
 // React Query Hooks
 export function useGetListings(params?: {
   page?: number;
@@ -149,5 +244,45 @@ export function useGetMyListings(params?: {
     queryKey: ["user-listings", params],
     queryFn: () => getUserListings(params),
     enabled: !!token,
+  });
+}
+
+export function useCreateListing() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: createListing,
+    onSuccess: (data) => {
+      // Invalidate user listings to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["user-listings"] });
+      // Invalidate all listings to refresh browse page
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      toast.success("Listing created successfully!");
+    },
+    onError: (error) => {
+      console.error("Create listing error:", error);
+      toast.error(error.message || "Failed to create listing");
+    },
+  });
+}
+
+export function useUpdateListing() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateListing(id, data),
+    onSuccess: (data, variables) => {
+      // Invalidate user listings to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["user-listings"] });
+      // Invalidate all listings to refresh browse page
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      // Invalidate specific listing
+      queryClient.invalidateQueries({ queryKey: ["listing", variables.id] });
+      toast.success("Listing updated successfully!");
+    },
+    onError: (error) => {
+      console.error("Update listing error:", error);
+      toast.error(error.message || "Failed to update listing");
+    },
   });
 }

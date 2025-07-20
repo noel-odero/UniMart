@@ -157,15 +157,9 @@ export async function sendMessage(data: SendMessageRequest): Promise<{ message: 
   return res.json();
 }
 
-export async function startConversation(data: StartConversationRequest): Promise<{
-  conversation: Conversation;
-  message: Message;
-  messageText: string;
-}> {
+export async function startConversation(listingId: string, initialMessage: string) {
   const token = localStorage.getItem("token");
-  if (!token) {
-    throw new Error("No authentication token");
-  }
+  if (!token) throw new Error("Not authenticated");
 
   const res = await fetch(`${API_BASE}/messages/start-conversation`, {
     method: "POST",
@@ -173,9 +167,12 @@ export async function startConversation(data: StartConversationRequest): Promise
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({ listingId, initialMessage }),
   });
-  return res.json();
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to start conversation");
+  return data;
 }
 
 export async function getUnreadCount(): Promise<{ unreadCount: number }> {
@@ -257,17 +254,15 @@ export function useSendMessage() {
 
 export function useStartConversation() {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: startConversation,
+    mutationFn: ({ listingId, initialMessage }: { listingId: string; initialMessage: string }) =>
+      startConversation(listingId, initialMessage),
     onSuccess: (data) => {
-      // Invalidate conversations to refresh the list
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success(data.messageText);
+      toast.success(data.messageText || "Conversation started!");
     },
-    onError: (error) => {
-      console.error("Start conversation error:", error);
-      toast.error("Failed to start conversation");
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to start conversation");
     },
   });
 }

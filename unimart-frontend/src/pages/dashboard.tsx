@@ -1,17 +1,21 @@
 
 import { useState } from "react";
-import { Plus, Search, Filter, Grid, List, MessageCircle } from "lucide-react";
+import { Plus, Search, Filter, Grid, List, MessageCircle, Edit, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-import { useGetMyListings } from "@/features/listings";
+import { useGetMyListings, useCreateListing, useUpdateListing } from "@/features/listings";
 import { useGetConversations } from "@/features/conversations";
 import { formatTimestamp } from "@/lib/utils";
 import ConversationDetail from "@/components/ConversationDetail";
+import CreateListingForm, { type ListingFormData } from "@/components/CreateListingForm";
+import EditListingForm, { type EditListingFormData } from "@/components/EditListingForm";
+import ListingDetail from "@/components/ListingDetail";
 import type { Conversation } from "@/features/conversations";
+import type { Listing } from "@/features/listings";
 
 const conversations = [
     {
@@ -48,6 +52,9 @@ const Dashboard = () => {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+    const [editingListing, setEditingListing] = useState<Listing | null>(null);
 
     // Get user's listings
     const { data: listingsData, isLoading, error } = useGetMyListings();
@@ -57,6 +64,10 @@ const Dashboard = () => {
     // Get conversations
     const { data: conversationsData } = useGetConversations();
     const conversations = conversationsData?.conversations || [];
+
+    // Create listing mutation
+    const createListingMutation = useCreateListing();
+    const updateListingMutation = useUpdateListing();
 
     // Calculate real stats from listings
     const activeListings = listings.filter(listing => listing.status === 'active').length;
@@ -75,7 +86,66 @@ const Dashboard = () => {
 
     const handleBackToList = () => {
         setSelectedConversation(null);
+        setSelectedListing(null);
+        setEditingListing(null);
     };
+
+    const handleBackFromListing = () => {
+        setSelectedListing(null);
+    };
+
+    const handleCreateListing = (data: ListingFormData) => {
+        createListingMutation.mutate(data, {
+            onSuccess: () => {
+                setShowCreateForm(false);
+            }
+        });
+    };
+
+    const handleEditListing = (listing: Listing) => {
+        setEditingListing(listing);
+    };
+
+    const handleUpdateListing = (data: EditListingFormData) => {
+        if (editingListing) {
+            updateListingMutation.mutate({
+                id: editingListing._id,
+                data
+            }, {
+                onSuccess: () => {
+                    setEditingListing(null);
+                }
+            });
+        }
+    };
+
+    const handleViewListing = (listing: Listing) => {
+        console.log("View listing clicked:", listing);
+        setSelectedListing(listing);
+    };
+
+    // If editing a listing, show the edit form
+    if (editingListing) {
+        return (
+            <EditListingForm
+                listing={editingListing}
+                onBack={() => setEditingListing(null)}
+                onSubmit={handleUpdateListing}
+                isLoading={updateListingMutation.isPending}
+            />
+        );
+    }
+
+    // If a listing is selected for viewing, show the detail view
+    if (selectedListing) {
+        console.log("Rendering ListingDetail for:", selectedListing);
+        return (
+            <ListingDetail 
+                listing={selectedListing} 
+                onBack={handleBackFromListing} 
+            />
+        );
+    }
 
     // If a conversation is selected, show the detail view
     if (selectedConversation) {
@@ -86,6 +156,17 @@ const Dashboard = () => {
                     onBack={handleBackToList} 
                 />
             </div>
+        );
+    }
+
+    // If create form is shown, display it
+    if (showCreateForm) {
+        return (
+            <CreateListingForm
+                onBack={() => setShowCreateForm(false)}
+                onSubmit={handleCreateListing}
+                isLoading={createListingMutation.isPending}
+            />
         );
     }
 
@@ -215,7 +296,10 @@ const Dashboard = () => {
                 >
                     <List className="w-4 h-4" />
                 </Button>
-                <Button className="ml-4 bg-gradient-to-r from-brown-600 to-brown-700 hover:from-brown-700 hover:to-brown-800 button-3d">
+                <Button 
+                    className="ml-4 bg-gradient-to-r from-brown-600 to-brown-700 hover:from-brown-700 hover:to-brown-800 button-3d"
+                    onClick={() => setShowCreateForm(true)}
+                >
                     <Plus className="w-4 h-4 mr-2" />
                     New Listing
                 </Button>
@@ -261,10 +345,22 @@ const Dashboard = () => {
                         <span className="text-sm text-brown-500">{listing.views} views</span>
                         </div>
                         <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
+                            onClick={() => handleEditListing(listing)}
+                        >
+                            <Edit className="w-3 h-3 mr-1" />
                             Edit
                         </Button>
-                        <Button variant="outline" size="sm" className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
+                            onClick={() => handleViewListing(listing)}
+                        >
+                            <Eye className="w-3 h-3 mr-1" />
                             View
                         </Button>
                         </div>

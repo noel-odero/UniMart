@@ -21,6 +21,7 @@ router.get('/user/my-listings', auth, async (req, res) => {
         if (status !== 'all') filter.status = status;
 
         const listings = await Listing.find(filter)
+            .populate('seller', 'fullName university avatar rating reviewCount')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
