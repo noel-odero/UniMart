@@ -12,6 +12,7 @@ import Dashboard from "./pages/dashboard";
 import Browse from "./pages/browse";
 import Messages from "./pages/messages";
 import NotFound from "./pages/notfound";
+import ListingDetailPage from "./pages/listingDetail";
 import { AuthProvider } from "./contexts/auth-context";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/browse" element={<Browse />} />
+            <Route path="/listing/:id" element={<ListingDetailPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

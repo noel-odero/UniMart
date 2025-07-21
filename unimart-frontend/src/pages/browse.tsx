@@ -125,14 +125,11 @@ const Browse = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const { data } = useGetListings();
-  const listings = data?.listings || [];
-
-
-
-  const filteredListings = listings.filter((listing) => {
+  const safeListings = (data?.listings ?? []).filter(l => l && typeof l === 'object');
+  const filteredListings = safeListings.filter((listing) => {
     const matchesSearch =
-      listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      listing.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (listing.title?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
+      (listing.description?.toLowerCase() ?? "").includes(searchQuery.toLowerCase());
     const matchesCategory =
       selectedCategory === "all" || listing.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -141,11 +138,11 @@ const Browse = () => {
   const sortedListings = [...filteredListings].sort((a, b) => {
     switch (sortBy) {
       case "price-low":
-        return a.price - b.price;
+        return (a.price ?? 0) - (b.price ?? 0);
       case "price-high":
-        return b.price - a.price;
+        return (b.price ?? 0) - (a.price ?? 0);
       case "popular":
-        return b.views - a.views;
+        return (b.views ?? 0) - (a.views ?? 0);
       default:
         return 0; // newest (default order)
     }
@@ -286,7 +283,7 @@ const Browse = () => {
                   variant="secondary"
                   className="bg-brown-100 text-brown-800"
                 >
-                  {listing.category}
+                  {listing.category || "No Category"}
                 </Badge>
                 <Button
                   variant="ghost"
@@ -297,44 +294,45 @@ const Browse = () => {
                 </Button>
               </div>
               <CardTitle className="text-lg text-brown-800 line-clamp-1">
-                {listing.title}
+                {listing.title || "Untitled"}
               </CardTitle>
               <CardDescription className="text-brown-600 line-clamp-2">
-                {listing.description}
+                {listing.description || "No description available"}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-brown-700">
-                    RWF {listing.price}
+                    RWF {listing.price ?? 0}
                   </span>
                   <Badge
                     variant="outline"
                     className="border-brown-300 text-brown-600"
                   >
-                    {listing.condition}
+                    {listing.condition || "Unknown Condition"}
                   </Badge>
                 </div>
 
                 <div className="flex items-center text-sm text-brown-500">
                   <MapPin className="w-3 h-3 mr-1" />
-                  {listing.location}
+                  {listing.location || "Location not specified"}
                 </div>
 
                 <div className="flex justify-between items-center text-sm text-brown-500">
-                  <span>By {listing.seller.fullName}</span>
-                  <span>{listing.views} views</span>
+                  <span>By {listing.seller?.fullName || "Seller"}</span>
+                  <span>{listing.views ?? 0} views</span>
                 </div>
 
                 <div className="flex justify-between items-center text-xs text-brown-400">
-                  <span>{listing.createdAt}</span>
+                  <span>{listing.createdAt || "Date unknown"}</span>
                 </div>
 
                 <div className="flex space-x-2 pt-2">
                   <Button
                     size="sm"
                     className="flex-1 bg-brown-600 hover:bg-brown-700"
+                    onClick={() => navigate(`/listing/${listing._id}`)}
                   >
                     View Details
                   </Button>
@@ -373,7 +371,7 @@ const Browse = () => {
             <DialogTitle>Message Seller</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <p className="text-brown-700">Send a message to the seller of <span className="font-semibold">{messageListing?.title}</span>:</p>
+            <p className="text-brown-700">Send a message to the seller of <span className="font-semibold">{messageListing?.title || "this item"}</span>:</p>
             <Textarea
               value={messageText}
               onChange={e => setMessageText(e.target.value)}

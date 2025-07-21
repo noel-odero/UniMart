@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-import { useGetMyListings, useCreateListing, useUpdateListing } from "@/features/listings";
+import { useGetMyListings, useCreateListing, useUpdateListing, useDeleteListing, API_BASE, useGetWishlistListings } from "@/features/listings";
 import { useGetConversations } from "@/features/conversations";
 import { formatTimestamp } from "@/lib/utils";
 import ConversationDetail from "@/components/ConversationDetail";
@@ -16,6 +16,9 @@ import EditListingForm, { type EditListingFormData } from "@/components/EditList
 import ListingDetail from "@/components/ListingDetail";
 import type { Conversation } from "@/features/conversations";
 import type { Listing } from "@/features/listings";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 const conversations = [
     {
@@ -55,27 +58,43 @@ const Dashboard = () => {
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
     const [editingListing, setEditingListing] = useState<Listing | null>(null);
+    const [listingsTab, setListingsTab] = useState<'active' | 'sold'>('active');
+    const [markingAsSold, setMarkingAsSold] = useState<Listing | null>(null);
+    const [soldPriceInput, setSoldPriceInput] = useState<string>("");
+    const [isSubmittingSold, setIsSubmittingSold] = useState(false);
+    const queryClient = useQueryClient();
 
     // Get user's listings
-    const { data: listingsData, isLoading, error } = useGetMyListings();
+    const { data: listingsData, isLoading, error } = useGetMyListings({ status: 'all' });
     const listings = listingsData?.listings || [];
-    console.log(listings)
+    const validListings = (listings ?? []).filter((l): l is Listing => !!l && typeof l === 'object');
+    console.log("All listings from backend:", listings);
+    const activeListingsArr = validListings.filter(listing => listing && listing.status === 'active');
+    const soldListingsArr = validListings.filter(listing => listing && listing.status === 'sold');
+    console.log("Active Listings Array:", activeListingsArr);
+    console.log("Sold Listings Array:", soldListingsArr);
 
     // Get conversations
     const { data: conversationsData } = useGetConversations();
     const conversations = conversationsData?.conversations || [];
 
+    // Get user's wishlist listings
+    const { data: wishlistListings, isLoading: isWishlistLoading, error: wishlistError } = useGetWishlistListings();
+
     // Create listing mutation
     const createListingMutation = useCreateListing();
     const updateListingMutation = useUpdateListing();
+    const deleteListingMutation = useDeleteListing();
 
     // Calculate real stats from listings
-    const activeListings = listings.filter(listing => listing.status === 'active').length;
-    const soldListings = listings.filter(listing => listing.status === 'sold').length;
-    const totalViews = listings.reduce((sum, listing) => sum + listing.views, 0);
-    const totalEarnings = listings
+    const activeListings = validListings.filter(listing => listing.status === 'active').length;
+    const soldListings = validListings.filter(listing => listing.status === 'sold').length;
+    const totalViews = validListings.reduce((sum, listing) => sum + listing.views, 0);
+    
+    // Update total earnings calculation
+    const totalEarnings = validListings
       .filter(listing => listing.status === 'sold')
-      .reduce((sum, listing) => sum + listing.price, 0);
+      .reduce((sum, listing) => sum + (listing.soldPrice || listing.price), 0);
     
     // Calculate total unread messages
     const totalUnreadMessages = conversations.reduce((sum, conversation) => sum + conversation.unreadCount, 0);
@@ -122,6 +141,50 @@ const Dashboard = () => {
     const handleViewListing = (listing: Listing) => {
         console.log("View listing clicked:", listing);
         setSelectedListing(listing);
+    };
+
+    const handleMarkAsSold = (listing: Listing) => {
+      setMarkingAsSold(listing);
+      setSoldPriceInput(listing.price?.toString() || "");
+    };
+    const handleConfirmMarkAsSold = async () => {
+      if (!markingAsSold) return;
+      setIsSubmittingSold(true);
+      try {
+        const res = await fetch(`${API_BASE}/listings/${markingAsSold._id}/sold`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ soldPrice: parseFloat(soldPriceInput) || markingAsSold.price }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success(data.message || "Listing marked as sold");
+          setMarkingAsSold(null);
+          setSoldPriceInput("");
+          // Invalidate listings query so stats and tabs update
+          queryClient.invalidateQueries({ queryKey: ["user-listings"] });
+        } else {
+          toast.error(data.message || "Failed to mark as sold");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to mark as sold");
+      } finally {
+        setIsSubmittingSold(false);
+      }
+    };
+    const handleCancelMarkAsSold = () => {
+      setMarkingAsSold(null);
+      setSoldPriceInput("");
+    };
+
+    const handleDeleteListing = async (listing: Listing) => {
+      const confirmed = window.confirm("Are you sure you want to delete this listing?");
+      if (confirmed) {
+        deleteListingMutation.mutate(listing._id);
+      }
     };
 
     // If editing a listing, show the edit form
@@ -252,124 +315,275 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="listings" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 bg-brown-100/70 border-brown-200/50">
-            <TabsTrigger value="listings" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">My Listings</TabsTrigger>
-            <TabsTrigger value="messages" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">Messages</TabsTrigger>
-            <TabsTrigger value="purchases" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">My Purchases</TabsTrigger>
-            <TabsTrigger value="wishlist" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">Wishlist</TabsTrigger>
+        <Tabs defaultValue={listingsTab} className="space-y-6" onValueChange={v => setListingsTab(v as 'active' | 'sold')}>
+            <TabsList className="grid w-full grid-cols-5 bg-brown-100/70 border-brown-200/50">
+                <TabsTrigger value="active" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">Active Listings</TabsTrigger>
+                <TabsTrigger value="sold" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">Sold Listings</TabsTrigger>
+                <TabsTrigger value="messages" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">Messages</TabsTrigger>
+                <TabsTrigger value="purchases" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">My Purchases</TabsTrigger>
+                <TabsTrigger value="wishlist" className="text-brown-700 data-[state=active]:bg-brown-200 data-[state=active]:text-brown-800">Wishlist</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="listings" className="space-y-6">
-            {/* Actions Bar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center space-x-4 flex-1">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-brown-500 w-4 h-4" />
-                    <Input
-                    placeholder="Search your listings..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 border-brown-300 focus:border-brown-500 bg-tan-50/50"
-                    />
+            <TabsContent value="active" className="space-y-6">
+                {/* Actions Bar */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center space-x-4 flex-1">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-brown-500 w-4 h-4" />
+                        <Input
+                        placeholder="Search your listings..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 border-brown-300 focus:border-brown-500 bg-tan-50/50"
+                        />
+                    </div>
+                    <Button variant="outline" size="sm" className="border-brown-300 text-brown-700 hover:bg-brown-100">
+                        <Filter className="w-4 h-4 mr-2" />
+                        Filter
+                    </Button>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                    <Button
+                        variant={viewMode === "grid" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setViewMode("grid")}
+                        className={viewMode === "grid" ? "bg-brown-600 hover:bg-brown-700" : "border-brown-300 text-brown-700 hover:bg-brown-100"}
+                    >
+                        <Grid className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant={viewMode === "list" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setViewMode("list")}
+                        className={viewMode === "list" ? "bg-brown-600 hover:bg-brown-700" : "border-brown-300 text-brown-700 hover:bg-brown-100"}
+                    >
+                        <List className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                        className="ml-4 bg-gradient-to-r from-brown-600 to-brown-700 hover:from-brown-700 hover:to-brown-800 button-3d"
+                        onClick={() => setShowCreateForm(true)}
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Listing
+                    </Button>
+                    </div>
                 </div>
-                <Button variant="outline" size="sm" className="border-brown-300 text-brown-700 hover:bg-brown-100">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filter
-                </Button>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                <Button
-                    variant={viewMode === "grid" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("grid")}
-                    className={viewMode === "grid" ? "bg-brown-600 hover:bg-brown-700" : "border-brown-300 text-brown-700 hover:bg-brown-100"}
-                >
-                    <Grid className="w-4 h-4" />
-                </Button>
-                <Button
-                    variant={viewMode === "list" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("list")}
-                    className={viewMode === "list" ? "bg-brown-600 hover:bg-brown-700" : "border-brown-300 text-brown-700 hover:bg-brown-100"}
-                >
-                    <List className="w-4 h-4" />
-                </Button>
-                <Button 
-                    className="ml-4 bg-gradient-to-r from-brown-600 to-brown-700 hover:from-brown-700 hover:to-brown-800 button-3d"
-                    onClick={() => setShowCreateForm(true)}
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Listing
-                </Button>
-                </div>
-            </div>
 
-            {/* Listings Grid/List */}
-            {isLoading ? (
-              <div className="text-center py-8">
-                <p className="text-brown-600">Loading your listings...</p>
-              </div>
-            ) : error ? (
-              <div className="text-center py-8">
-                <p className="text-red-600">Error loading listings: {error.message}</p>
-              </div>
-            ) : listings.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-brown-500">No listings yet. Create your first listing!</p>
-              </div>
-            ) : (
-              <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
-                {listings.map((listing) => (
-                <Card key={listing._id} className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
-                    <CardHeader className="pb-4">
-                    <div className="flex justify-between items-start">
-                        <div>
-                        <CardTitle className="text-lg text-brown-800">{listing.title}</CardTitle>
-                        <CardDescription className="text-brown-600">{listing.category}</CardDescription>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        listing.status === "active" 
-                            ? "bg-brown-100 text-brown-800" 
-                            : "bg-brown-200 text-brown-700"
-                        }`}>
-                        {listing.status}
-                        </span>
+                {/* Listings Grid/List for Active */}
+                {isLoading ? (
+                    <div className="text-center py-8">
+                        <p className="text-brown-600">Loading your listings...</p>
                     </div>
-                    </CardHeader>
-                    <CardContent>
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                        <span className="text-2xl font-bold text-brown-600">RWF {listing.price}</span>
-                        <span className="text-sm text-brown-500">{listing.views} views</span>
-                        </div>
-                        <div className="flex space-x-2">
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
-                            onClick={() => handleEditListing(listing)}
-                        >
-                            <Edit className="w-3 h-3 mr-1" />
-                            Edit
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
-                            onClick={() => handleViewListing(listing)}
-                        >
-                            <Eye className="w-3 h-3 mr-1" />
-                            View
-                        </Button>
-                        </div>
+                ) : error ? (
+                    <div className="text-center py-8">
+                        <p className="text-red-600">Error loading listings: {error.message}</p>
                     </div>
-                    </CardContent>
-                </Card>
-                ))}
-              </div>
-            )}
+                ) : activeListingsArr.length === 0 ? (
+                    <div className="text-center py-8">
+                        <p className="text-brown-500">No active listings yet. Create your first listing!</p>
+                    </div>
+                ) : (
+                    <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+                        {activeListingsArr.map((listing) => (
+                            listing ? (
+                                <Card key={listing._id} className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
+                                    <CardHeader className="pb-4">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <CardTitle className="text-lg text-brown-800">{listing?.title || "Untitled"}</CardTitle>
+                                                <CardDescription className="text-brown-600">{listing?.category || "No category"}</CardDescription>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                listing.status === "active" 
+                                                    ? "bg-brown-100 text-brown-800" 
+                                                    : "bg-brown-200 text-brown-700"
+                                            }`}>
+                                                {listing.status}
+                                            </span>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-2xl font-bold text-brown-600">RWF {listing?.price ?? 0}</span>
+                                                <span className="text-sm text-brown-500">{listing?.views ?? 0} views</span>
+                                            </div>
+                                            <div className="flex space-x-2">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
+                                                    onClick={() => handleEditListing(listing)}
+                                                >
+                                                    <Edit className="w-3 h-3 mr-1" />
+                                                    Edit
+                                                </Button>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
+                                                    onClick={() => handleViewListing(listing)}
+                                                >
+                                                    <Eye className="w-3 h-3 mr-1" />
+                                                    View
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
+                                                    onClick={() => handleMarkAsSold(listing)}
+                                                    disabled={listing.status === 'sold'}
+                                                >
+                                                    Mark as Sold
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    className="flex-1 border-brown-300 text-red-700 hover:bg-red-100"
+                                                    onClick={() => handleDeleteListing(listing)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ) : null
+                        ))}
+                    </div>
+                )}
+            </TabsContent>
+
+            <TabsContent value="sold" className="space-y-6">
+                {/* Actions Bar */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center space-x-4 flex-1">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-brown-500 w-4 h-4" />
+                        <Input
+                        placeholder="Search your listings..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 border-brown-300 focus:border-brown-500 bg-tan-50/50"
+                        />
+                    </div>
+                    <Button variant="outline" size="sm" className="border-brown-300 text-brown-700 hover:bg-brown-100">
+                        <Filter className="w-4 h-4 mr-2" />
+                        Filter
+                    </Button>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                    <Button
+                        variant={viewMode === "grid" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setViewMode("grid")}
+                        className={viewMode === "grid" ? "bg-brown-600 hover:bg-brown-700" : "border-brown-300 text-brown-700 hover:bg-brown-100"}
+                    >
+                        <Grid className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant={viewMode === "list" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setViewMode("list")}
+                        className={viewMode === "list" ? "bg-brown-600 hover:bg-brown-700" : "border-brown-300 text-brown-700 hover:bg-brown-100"}
+                    >
+                        <List className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                        className="ml-4 bg-gradient-to-r from-brown-600 to-brown-700 hover:from-brown-700 hover:to-brown-800 button-3d"
+                        onClick={() => setShowCreateForm(true)}
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Listing
+                    </Button>
+                    </div>
+                </div>
+
+                {/* Listings Grid/List for Sold */}
+                {isLoading ? (
+                    <div className="text-center py-8">
+                        <p className="text-brown-600">Loading your listings...</p>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-8">
+                        <p className="text-red-600">Error loading listings: {error.message}</p>
+                    </div>
+                ) : soldListingsArr.length === 0 ? (
+                    <div className="text-center py-8">
+                        <p className="text-brown-500">No sold listings yet.</p>
+                    </div>
+                ) : (
+                    <div className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+                        {soldListingsArr.map((listing) => (
+                            listing ? (
+                                <Card key={listing._id} className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
+                                    <CardHeader className="pb-4">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <CardTitle className="text-lg text-brown-800">{listing?.title || "Untitled"}</CardTitle>
+                                                <CardDescription className="text-brown-600">{listing?.category || "No category"}</CardDescription>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                listing.status === "sold" 
+                                                    ? "bg-brown-100 text-brown-800" 
+                                                    : "bg-brown-200 text-brown-700"
+                                            }`}>
+                                                {listing.status}
+                                            </span>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-2xl font-bold text-brown-600">RWF {listing?.soldPrice || listing?.price || 0}</span>
+                                                <span className="text-sm text-brown-500">{listing?.views ?? 0} views</span>
+                                            </div>
+                                            <div className="flex space-x-2">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
+                                                    onClick={() => handleEditListing(listing)}
+                                                >
+                                                    <Edit className="w-3 h-3 mr-1" />
+                                                    Edit
+                                                </Button>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
+                                                    onClick={() => handleViewListing(listing)}
+                                                >
+                                                    <Eye className="w-3 h-3 mr-1" />
+                                                    View
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
+                                                    onClick={() => handleMarkAsSold(listing)}
+                                                    disabled={listing.status === 'sold'}
+                                                >
+                                                    Mark as Sold
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    className="flex-1 border-brown-300 text-red-700 hover:bg-red-100"
+                                                    onClick={() => handleDeleteListing(listing)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ) : null
+                        ))}
+                    </div>
+                )}
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6">
@@ -387,20 +601,22 @@ const Dashboard = () => {
                         onClick={() => handleConversationClick(conversation)}
                     >
                         <Avatar className="w-10 h-10">
-                        <AvatarImage src={conversation.participants[0].avatar} />
+                        <AvatarImage src={conversation.participants?.[0]?.avatar} />
                         <AvatarFallback className="bg-brown-200 text-brown-700">
-                            {conversation.participants[0].fullName.split(" ").map(n => n[0]).join("")}
+                            {(conversation.participants?.[0]?.fullName || "??").split(" ").map(n => n[0]).join("")}
                         </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-1">
                             <p className="text-sm font-medium text-brown-800 truncate">
-                            {conversation.participants[0].fullName}
+                            {conversation.participants?.[0]?.fullName || "Unknown"}
                             </p>
                             <p className="text-xs text-brown-500">{formatTimestamp(conversation.lastActivity)}</p>
                         </div>
-                        <p className="text-xs text-brown-600 mb-1 truncate">About: {conversation.listing.title}</p>
-                        <p className="text-sm text-brown-600 truncate">{conversation.lastMessage?.content}</p>
+                        <p className="text-xs text-brown-600 mb-1 truncate">
+                            About: {conversation.listing?.title || "Unknown item"}
+                        </p>
+                        <p className="text-sm text-brown-600 truncate">{conversation.lastMessage?.content || "No messages yet"}</p>
                         </div>
                         {conversation.unreadCount > 0 && (
                         <div className="w-5 h-5 bg-brown-600 rounded-full flex items-center justify-center">
@@ -433,11 +649,67 @@ const Dashboard = () => {
                 <CardDescription className="text-brown-600">Items you're interested in buying</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <p className="text-brown-500 text-center py-8">Your wishlist is empty. Add some items!</p>
+                {isWishlistLoading ? (
+                    <p className="text-brown-600 text-center py-8">Loading wishlist...</p>
+                ) : wishlistError ? (
+                    <p className="text-red-600 text-center py-8">Error loading wishlist: {wishlistError.message}</p>
+                ) : !wishlistListings || wishlistListings.length === 0 ? (
+                    <p className="text-brown-500 text-center py-8">Your wishlist is empty. Add some items!</p>
+                ) : (
+                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                        {wishlistListings.map((listing) => (
+                            <Card key={listing._id} className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
+                                <CardHeader className="pb-4">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <CardTitle className="text-lg text-brown-800">{listing?.title || "Untitled"}</CardTitle>
+                                            <CardDescription className="text-brown-600">{listing?.category || "No category"}</CardDescription>
+                                        </div>
+                                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-brown-100 text-brown-800">Wishlist</span>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-2xl font-bold text-brown-600">RWF {listing?.price ?? 0}</span>
+                                            <span className="text-sm text-brown-500">{listing?.views ?? 0} views</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
                 </CardContent>
             </Card>
             </TabsContent>
         </Tabs>
+        {/* Mark as Sold Modal */}
+        <Dialog open={!!markingAsSold} onOpenChange={handleCancelMarkAsSold}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Mark as Sold</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-brown-700">Enter the final sold price for <span className="font-semibold">{markingAsSold?.title}</span>:</p>
+              <Input
+                type="number"
+                min={0}
+                step={1}
+                value={soldPriceInput}
+                onChange={e => setSoldPriceInput(e.target.value)}
+                className="border-brown-300 focus:border-brown-500"
+                placeholder="Sold price (RWF)"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCancelMarkAsSold} disabled={isSubmittingSold}>Cancel</Button>
+              <Button onClick={handleConfirmMarkAsSold} disabled={isSubmittingSold || !soldPriceInput}>
+                {isSubmittingSold ? "Processing..." : "Confirm"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         </div>
     );
 };

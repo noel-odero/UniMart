@@ -2,7 +2,7 @@ import type { AuthResponse } from "@/types/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+export const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 // Types for listings
 export interface Listing {
@@ -17,6 +17,7 @@ export interface Listing {
   location: string;
   status: 'active' | 'sold' | 'inactive';
   views: number;
+  soldPrice?: number;
   seller: {
     _id: string;
     fullName: string;
@@ -207,6 +208,46 @@ export async function updateListing(id: string, data: {
   return res.json();
 }
 
+export async function deleteListing(id: string): Promise<{ message: string }> {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No authentication token");
+
+  const res = await fetch(`${API_BASE}/listings/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to delete listing");
+  return data;
+}
+
+// API: Get user's wishlist listings
+export async function getWishlistListings(): Promise<Listing[]> {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No authentication token");
+  const res = await fetch(`${API_BASE}/listings/user/wishlist`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to fetch wishlist");
+  return data.wishlist;
+}
+
+// API: Toggle wishlist status for a listing
+export async function toggleWishlist(listingId: string): Promise<{ inWishlist: boolean; message: string }> {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No authentication token");
+  const res = await fetch(`${API_BASE}/listings/${listingId}/wishlist`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Failed to update wishlist");
+  return data;
+}
+
 // React Query Hooks
 export function useGetListings(params?: {
   page?: number;
@@ -283,6 +324,42 @@ export function useUpdateListing() {
     onError: (error) => {
       console.error("Update listing error:", error);
       toast.error(error.message || "Failed to update listing");
+    },
+  });
+}
+
+export function useDeleteListing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteListing(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-listings"] });
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      toast.success("Listing deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete listing");
+    },
+  });
+}
+
+// React Query: Fetch wishlist listings
+export function useGetWishlistListings() {
+  return useQuery({
+    queryKey: ["wishlist-listings"],
+    queryFn: getWishlistListings,
+  });
+}
+
+// React Query: Toggle wishlist
+export function useToggleWishlist() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (listingId: string) => toggleWishlist(listingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist-listings"] });
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      queryClient.invalidateQueries({ queryKey: ["user-listings"] });
     },
   });
 }

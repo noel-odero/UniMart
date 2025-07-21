@@ -112,20 +112,20 @@ export default function Messages() {
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={otherParticipant?.avatar} />
                       <AvatarFallback className="bg-brown-200 text-brown-700">
-                        {otherParticipant?.fullName.split(" ").map(n => n[0]).join("")}
+                        {(otherParticipant?.fullName || "??").split(" ").map(n => n[0]).join("")}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center mb-1">
                         <p className="text-sm font-medium text-brown-800 truncate">
-                          {otherParticipant?.fullName}
+                          {otherParticipant?.fullName || "Unknown"}
                         </p>
                         <p className="text-xs text-brown-500">
                           {formatTimestamp(conversation.lastActivity)}
                         </p>
                       </div>
                       <p className="text-xs text-brown-600 mb-1 truncate">
-                        About: {conversation.listing.title}
+                        About: {conversation.listing?.title || "Unknown item"}
                       </p>
                       <p className="text-sm text-brown-600 truncate">
                         {lastMessage?.content || "No messages yet"}

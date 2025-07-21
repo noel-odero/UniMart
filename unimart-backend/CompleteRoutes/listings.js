@@ -288,6 +288,37 @@ router.post('/:id/wishlist', auth, async (req, res) => {
     }
 });
 
+// Get user's wishlist listings
+router.get('/user/wishlist', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate({
+            path: 'wishlist',
+            populate: { path: 'seller', select: 'fullName university avatar rating reviewCount' }
+        });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json({ wishlist: user.wishlist });
+    } catch (error) {
+        console.error('Get wishlist error:', error);
+        res.status(500).json({ message: 'Server error while fetching wishlist' });
+    }
+});
+
+// Delete listing
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        const listing = await Listing.findOne({
+            _id: req.params.id,
+            seller: req.user._id
+        });
+        if (!listing) return res.status(404).json({ message: 'Listing not found or you are not the seller' });
+        await listing.deleteOne();
+        res.json({ message: 'Listing deleted successfully' });
+    } catch (error) {
+        console.error('Delete listing error:', error);
+        res.status(500).json({ message: 'Server error while deleting listing' });
+    }
+});
+
 // Get single listing (LAST!)
 router.get('/:id', async (req, res) => {
     try {
