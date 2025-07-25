@@ -187,7 +187,7 @@ export default function EditListingForm({ listing, onBack, onSubmit, isLoading =
                     <SelectTrigger className="border-brown-300 focus:border-brown-500 bg-tan-50/50">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50 bg-tan-50 rounded-md shadow-lg">
                       {CATEGORIES.map(category => (
                         <SelectItem key={category} value={category}>
                           {category}
@@ -206,7 +206,7 @@ export default function EditListingForm({ listing, onBack, onSubmit, isLoading =
                     <SelectTrigger className="border-brown-300 focus:border-brown-500 bg-tan-50/50">
                       <SelectValue placeholder="Select condition" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50 bg-tan-50 rounded-md shadow-lg">
                       {CONDITIONS.map(condition => (
                         <SelectItem key={condition} value={condition}>
                           {condition}

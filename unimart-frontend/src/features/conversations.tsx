@@ -283,7 +283,7 @@ export function useMarkConversationAsRead() {
   
   return useMutation({
     mutationFn: markConversationAsRead,
-    onSuccess: (data, conversationId) => {
+    onSuccess: (data) => {
       // Invalidate conversations to refresh unread counts
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       // Invalidate unread count

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Plus, Search, Filter, Grid, List, MessageCircle, Edit, Eye } from "lucide-react";
+import { Plus, Search, Filter, Grid, List, MessageCircle, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,35 +20,35 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 
-const conversations = [
-    {
-    id: 1,
-    name: "Sarah Johnson",
-    lastMessage: "Is the laptop still available?",
-    timestamp: "2 min ago",
-    unread: 2,
-    avatar: "/placeholder.svg",
-    item: "MacBook Pro 13-inch"
-    },
-    {
-    id: 2,
-    name: "Mike Chen",
-    lastMessage: "Thanks for the textbook!",
-    timestamp: "1 hour ago",
-    unread: 0,
-    avatar: "/placeholder.svg",
-    item: "Calculus Textbook"
-    },
-    {
-    id: 3,
-    name: "Anna Wilson",
-    lastMessage: "Can we meet tomorrow?",
-    timestamp: "3 hours ago",
-    unread: 1,
-    avatar: "/placeholder.svg",
-    item: "Study Desk"
-    }
-];
+// const conversations = [
+//     {
+//     id: 1,
+//     name: "Sarah Johnson",
+//     lastMessage: "Is the laptop still available?",
+//     timestamp: "2 min ago",
+//     unread: 2,
+//     avatar: "/placeholder.svg",
+//     item: "MacBook Pro 13-inch"
+//     },
+//     {
+//     id: 2,
+//     name: "Mike Chen",
+//     lastMessage: "Thanks for the textbook!",
+//     timestamp: "1 hour ago",
+//     unread: 0,
+//     avatar: "/placeholder.svg",
+//     item: "Calculus Textbook"
+//     },
+//     {
+//     id: 3,
+//     name: "Anna Wilson",
+//     lastMessage: "Can we meet tomorrow?",
+//     timestamp: "3 hours ago",
+//     unread: 1,
+//     avatar: "/placeholder.svg",
+//     item: "Study Desk"
+//     }
+// ];
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -64,39 +64,28 @@ const Dashboard = () => {
     const [isSubmittingSold, setIsSubmittingSold] = useState(false);
     const queryClient = useQueryClient();
 
-    // Get user's listings
     const { data: listingsData, isLoading, error } = useGetMyListings({ status: 'all' });
     const listings = listingsData?.listings || [];
     const validListings = (listings ?? []).filter((l): l is Listing => !!l && typeof l === 'object');
-    console.log("All listings from backend:", listings);
     const activeListingsArr = validListings.filter(listing => listing && listing.status === 'active');
     const soldListingsArr = validListings.filter(listing => listing && listing.status === 'sold');
-    console.log("Active Listings Array:", activeListingsArr);
-    console.log("Sold Listings Array:", soldListingsArr);
 
-    // Get conversations
     const { data: conversationsData } = useGetConversations();
     const conversations = conversationsData?.conversations || [];
 
-    // Get user's wishlist listings
     const { data: wishlistListings, isLoading: isWishlistLoading, error: wishlistError } = useGetWishlistListings();
 
-    // Create listing mutation
     const createListingMutation = useCreateListing();
     const updateListingMutation = useUpdateListing();
     const deleteListingMutation = useDeleteListing();
 
-    // Calculate real stats from listings
     const activeListings = validListings.filter(listing => listing.status === 'active').length;
     const soldListings = validListings.filter(listing => listing.status === 'sold').length;
-    const totalViews = validListings.reduce((sum, listing) => sum + listing.views, 0);
     
-    // Update total earnings calculation
     const totalEarnings = validListings
       .filter(listing => listing.status === 'sold')
       .reduce((sum, listing) => sum + (listing.soldPrice || listing.price), 0);
     
-    // Calculate total unread messages
     const totalUnreadMessages = conversations.reduce((sum, conversation) => sum + conversation.unreadCount, 0);
 
     const handleConversationClick = (conversation: Conversation) => {
@@ -289,20 +278,6 @@ const Dashboard = () => {
             <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-brown-600">Total Views</p>
-                    <p className="text-2xl font-bold text-brown-800">{totalViews}</p>
-                </div>
-                <div className="w-8 h-8 bg-brown-100 rounded-full flex items-center justify-center">
-                    <span className="text-brown-600 font-bold">👁</span>
-                </div>
-                </div>
-            </CardContent>
-            </Card>
-
-            <Card className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
-            <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                <div>
                     <p className="text-sm font-medium text-brown-600">Total Earnings</p>
                     <p className="text-2xl font-bold text-brown-800">RWF {totalEarnings}</p>
                 </div>
@@ -407,7 +382,6 @@ const Dashboard = () => {
                                         <div className="space-y-2">
                                             <div className="flex justify-between items-center">
                                                 <span className="text-2xl font-bold text-brown-600">RWF {listing?.price ?? 0}</span>
-                                                <span className="text-sm text-brown-500">{listing?.views ?? 0} views</span>
                                             </div>
                                             <div className="flex space-x-2">
                                                 <Button 
@@ -425,7 +399,6 @@ const Dashboard = () => {
                                                     className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
                                                     onClick={() => handleViewListing(listing)}
                                                 >
-                                                    <Eye className="w-3 h-3 mr-1" />
                                                     View
                                                 </Button>
                                                 <Button
@@ -538,7 +511,6 @@ const Dashboard = () => {
                                         <div className="space-y-2">
                                             <div className="flex justify-between items-center">
                                                 <span className="text-2xl font-bold text-brown-600">RWF {listing?.soldPrice || listing?.price || 0}</span>
-                                                <span className="text-sm text-brown-500">{listing?.views ?? 0} views</span>
                                             </div>
                                             <div className="flex space-x-2">
                                                 <Button 
@@ -556,7 +528,6 @@ const Dashboard = () => {
                                                     className="flex-1 border-brown-300 text-brown-700 hover:bg-brown-100"
                                                     onClick={() => handleViewListing(listing)}
                                                 >
-                                                    <Eye className="w-3 h-3 mr-1" />
                                                     View
                                                 </Button>
                                                 <Button
@@ -672,7 +643,6 @@ const Dashboard = () => {
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
                                             <span className="text-2xl font-bold text-brown-600">RWF {listing?.price ?? 0}</span>
-                                            <span className="text-sm text-brown-500">{listing?.views ?? 0} views</span>
                                         </div>
                                     </div>
                                 </CardContent>

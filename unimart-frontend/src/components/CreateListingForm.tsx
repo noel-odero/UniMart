@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { ArrowLeft, Upload, X, Plus, Camera } from "lucide-react";
+import { ArrowLeft, X, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -202,7 +202,7 @@ export default function CreateListingForm({ onBack, onSubmit, isLoading = false 
                     <SelectTrigger className="border-brown-300 focus:border-brown-500 bg-tan-50/50">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50 bg-tan-50 rounded-md shadow-lg">
                       {CATEGORIES.map(category => (
                         <SelectItem key={category} value={category}>
                           {category}
@@ -221,7 +221,7 @@ export default function CreateListingForm({ onBack, onSubmit, isLoading = false 
                     <SelectTrigger className="border-brown-300 focus:border-brown-500 bg-tan-50/50">
                       <SelectValue placeholder="Select condition" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50 bg-tan-50 rounded-md shadow-lg">
                       {CONDITIONS.map(condition => (
                         <SelectItem key={condition} value={condition}>
                           {condition}

@@ -26,7 +26,7 @@ const features = [
     icon: Shield,
     title: "Secure Platform",
     description:
-      "Campus email verification and user ratings ensure safe transactions",
+      "Campus email verification ensures safe transactions",
   },
   {
     icon: Smartphone,
@@ -35,12 +35,6 @@ const features = [
   },
 ];
 
-const stats = [
-  { label: "Active Students", value: "500+" },
-  { label: "Items Sold", value: "1,200+" },
-  { label: "Universities", value: "25+" },
-  { label: "Success Rate", value: "98%" },
-];
 
 const Index = () => {
   const { user } = useAuth();
@@ -84,26 +78,6 @@ const Index = () => {
               </Button>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-16 bg-gradient-to-r from-brown-100/50 to-tan-100/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="text-center transform hover:scale-110 transition-all duration-300 animate-slide-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="text-3xl md:text-4xl font-bold text-brown-700 mb-2 text-shadow">
-                  {stat.value}
-                </div>
-                <div className="text-brown-600">{stat.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -152,7 +126,7 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-brown-600 to-brown-700 animate-fade-in">
+      {/* <section className="py-20 bg-gradient-to-r from-brown-600 to-brown-700 animate-fade-in">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-tan-50 mb-4 text-shadow animate-slide-up">
             Ready to Start Trading?
@@ -173,17 +147,17 @@ const Index = () => {
             <Link to="/signup">Create Your Account</Link>
           </Button>
         </div>
-      </section>
+      </section> */}
 
       {/* How It Works Section */}
       <section className="py-20 bg-gradient-to-br from-tan-50 to-brown-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-slide-up">
+          <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-brown-800 mb-4 text-shadow">
               How It Works
             </h2>
             <p className="text-xl text-brown-600">
-              Simple steps to start trading
+              Just three easy steps to start your campus trading adventure!
             </p>
           </div>
 
@@ -193,36 +167,36 @@ const Index = () => {
                 step: 1,
                 title: "Sign Up",
                 description:
-                  "Create your account using your campus email address",
+                  "Create your account using your campus email address. (We love meeting new friends!)",
               },
               {
                 step: 2,
                 title: "List or Browse",
                 description:
-                  "Post items for sale or browse what others are offering",
+                  "Post your own items or explore what others are offering. You never know what you’ll find!",
               },
               {
                 step: 3,
                 title: "Connect & Trade",
                 description:
-                  "Message buyers/sellers and complete your transactions safely",
+                  "Message buyers and sellers, meet up safely, and celebrate your new finds!",
               },
             ].map((item, index) => (
               <div
                 key={index}
-                className="text-center animate-slide-up"
-                style={{ animationDelay: `${index * 0.2}s` }}
+                className="text-center flex flex-col items-center bg-tan-100/60 rounded-xl shadow p-8 border border-brown-100 hover:shadow-lg transition-shadow duration-200 pt-8"
               >
-                <div
-                  className="w-16 h-16 bg-gradient-to-br from-brown-600 to-brown-700 text-tan-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold transform hover:scale-110 transition-all duration-300 animate-float"
-                  style={{ animationDelay: `${index * 0.5}s` }}
-                >
-                  {item.step}
+                <div className="relative mb-2">
+                  <span className="absolute -top-12 left-1/2 -translate-x-1/2 bg-brown-200 text-brown-800 text-xs px-3 py-1 rounded-full shadow-sm font-semibold">
+                    Step {item.step}
+                  </span>
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-brown-800">
                   {item.title}
                 </h3>
-                <p className="text-brown-600">{item.description}</p>
+                <p className="text-brown-600 text-base leading-relaxed max-w-xs mx-auto">
+                  {item.description}
+                </p>
               </div>
             ))}
           </div>

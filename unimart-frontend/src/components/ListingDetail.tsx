@@ -1,4 +1,4 @@
-import { ArrowLeft, Eye, MapPin, Calendar, User } from "lucide-react";
+import { ArrowLeft, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,6 @@ interface ListingDetailProps {
 }
 
 export default function ListingDetail({ listing, onBack }: ListingDetailProps) {
-  // Safety check for listing data
   if (!listing) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-tan-50 via-brown-50 to-tan-100 p-4">
@@ -48,7 +47,6 @@ export default function ListingDetail({ listing, onBack }: ListingDetailProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-tan-50 via-brown-50 to-tan-100 p-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="flex items-center space-x-3 mb-6">
           <Button
             variant="ghost"
@@ -62,7 +60,6 @@ export default function ListingDetail({ listing, onBack }: ListingDetailProps) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Images Section */}
           <Card className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
             <CardHeader>
               <CardTitle className="text-brown-800">Images</CardTitle>
@@ -99,9 +96,7 @@ export default function ListingDetail({ listing, onBack }: ListingDetailProps) {
             </CardContent>
           </Card>
 
-          {/* Details Section */}
           <div className="space-y-6">
-            {/* Main Info */}
             <Card className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -117,14 +112,9 @@ export default function ListingDetail({ listing, onBack }: ListingDetailProps) {
               <CardContent className="space-y-4">
                 <p className="text-brown-700 leading-relaxed">{listing.description}</p>
                 
-                <div className="flex items-center space-x-2 text-brown-600">
-                  <Eye className="w-4 h-4" />
-                  <span className="text-sm">{listing.views} views</span>
-                </div>
               </CardContent>
             </Card>
 
-            {/* Category & Status */}
             <Card className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
               <CardHeader>
                 <CardTitle className="text-brown-800">Details</CardTitle>
@@ -159,7 +149,6 @@ export default function ListingDetail({ listing, onBack }: ListingDetailProps) {
               </CardContent>
             </Card>
 
-            {/* Seller Info */}
             <Card className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
               <CardHeader>
                 <CardTitle className="text-brown-800">Seller Information</CardTitle>
@@ -188,7 +177,6 @@ export default function ListingDetail({ listing, onBack }: ListingDetailProps) {
               </CardContent>
             </Card>
 
-            {/* Timestamps */}
             <Card className="card-3d bg-gradient-to-br from-tan-50 to-brown-50 border-brown-200/50">
               <CardHeader>
                 <CardTitle className="text-brown-800">Timeline</CardTitle>

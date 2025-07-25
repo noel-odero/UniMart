@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Send, ArrowLeft, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useGetMessages, useSendMessage, type Conversation, type Message } from "@/features/conversations";
+import { useGetMessages, useSendMessage, type Conversation} from "@/features/conversations"; //, type Message 
 import { formatTimestamp } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 
