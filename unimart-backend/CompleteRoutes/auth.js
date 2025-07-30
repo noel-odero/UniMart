@@ -85,7 +85,7 @@ router.post(
 
       res.status(201).json({
         message:
-          "Account created successfully! Please check your email to verify your account.",
+          "Account created successfully! Please login to your account.",
         user,
       });
     } catch (error) {
