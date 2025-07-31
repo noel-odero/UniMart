@@ -31,7 +31,7 @@ UniMart is a full-stack campus marketplace platform for African university stude
 
 ### 1. Clone the repository
 ```bash
-git clone <your-repo-url>
+git clone <git@github.com:noel-odero/UniMart.git>
 cd UniMart
 ```
 
@@ -79,8 +79,3 @@ UniMart/
 
 ## Contributing
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
-
----
-
-## License
-[MIT](LICENSE) 
